@@ -1,0 +1,14 @@
+mkdir build 
+mkdir build/interface 
+mkdir build/capture 
+mkdir build/common 
+mkdir build/control 
+mkdir build/mission 
+mkdir build/modeling 
+mkdir build/server
+mkdir build/vision
+mkdir bin
+mkdir logs
+mkdir logs/text
+mkdir pipes
+touch pipes/mock_port

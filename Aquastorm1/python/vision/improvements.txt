@@ -1,0 +1,4 @@
+np.asarray instead of np.array
+change feed dict
+look into whether we can transmit image as np array
+XLA implementation

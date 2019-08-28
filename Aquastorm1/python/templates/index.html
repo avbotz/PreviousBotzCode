@@ -1,0 +1,188 @@
+<html>
+
+<head>
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.css') }}"> -->
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
+	<script>
+		function encode (input) {
+			var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+			var output = "";
+			var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+			var i = 0;
+
+			while (i < input.length) {
+				chr1 = input[i++];
+				chr2 = i < input.length ? input[i++] : Number.NaN; // Not sure if the index 
+				chr3 = i < input.length ? input[i++] : Number.NaN; // checks are needed here
+
+				enc1 = chr1 >> 2;
+				enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+				enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+				enc4 = chr3 & 63;
+
+				if (isNaN(chr2)) {
+					enc3 = enc4 = 64;
+				} else if (isNaN(chr3)) {
+					enc4 = 64;
+				}
+				output += keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+						  keyStr.charAt(enc3) + keyStr.charAt(enc4);
+			}
+			return output;
+		}
+        document.addEventListener("DOMContentLoaded", function () {
+            var socket = io("http://" + document.domain + ":" + location.port);
+            console.log("http://" + document.domain + ":" + location.port);
+            var updates = 0;
+            var keystate = {
+                "a": false,
+                "d": false,
+                "s": false,
+                "w": false,
+                "ArrowRight": false,
+                "ArrowLeft": false,
+                "ArrowUp": false,
+                "ArrowDown": false
+            }
+
+            socket.on('logs_get', function(logs) {
+                for (var i = 0; i < logs.length; i++) {
+                    document.getElementById("log-data").innerHTML += (logs[i] + "\n");
+                }
+            })
+
+            socket.on('state_get', function (state) {
+                updates++;
+                document.getElementById("x").innerHTML = ("X: " + state[0]);
+                document.getElementById("y").innerHTML = ("Y: " + state[1]);
+                document.getElementById("depth").innerHTML = ("Depth: " + state[2]);
+                document.getElementById("yaw").innerHTML = ("Yaw: " + state[3]);
+                document.getElementById("pitch").innerHTML = ("Pitch: " + state[4]);
+                document.getElementById("roll").innerHTML = ("Roll: " + state[5]);
+                document.getElementById("upd").innerHTML = ("Updates: " + updates);
+            });
+
+            socket.on('down_img', function (image) {
+				var down_img_old = document.getElementById("down-cam");
+                var down_img_new = new Image();
+                down_img_new.src = 'data:image/jpeg;base64,' + encode(new Uint8Array(image));
+                down_img_new.id = 'down-cam';
+                down_img_old.parentNode.replaceChild(down_img_new, down_img_old);
+            });
+
+            socket.on('front_img', function (image) {
+                var front_img_old = document.getElementById("front-cam");
+                var front_img_new = new Image();
+                front_img_new.src = 'data:image/jpeg;base64,' + encode(new Uint8Array(image));
+                front_img_new.id = 'front-cam';
+                front_img_old.parentNode.replaceChild(front_img_new, front_img_old);
+            });
+
+            socket.on('debug_img', function (image) {
+                var debug_img_old = document.getElementById("debug-img");
+                var debug_img_new = new Image();
+                debug_img_new.src = 'data:image/jpeg;base64,' + encode(new Uint8Array(image));
+                debug_img_new.id = 'debug-img';
+                debug_img_old.parentNode.replaceChild(debug_img_new, debug_img_old);
+            });
+
+            socket.on('kill_get', function(kill_state) {
+                if (kill_state) {
+                    document.getElementById("kill-state").innerHTML = "Alive";
+                    document.getElementById("kill-state").style = "color: green;";
+                } else {
+                    document.getElementById("kill-state").innerHTML = "Killed";
+                    document.getElementById("kill-state").style = "color: red;";
+                }
+            });
+
+            document.getElementById("state-100").addEventListener("click", function() {       
+                socket.emit("state_set", [100, 100, 100, 100, 100, 100]);
+            });
+
+            document.getElementById("reset-state").addEventListener("click", function() {
+                socket.emit("state_set", [0, 0, 0, 0, 0, 0]);
+            });
+
+            document.getElementById("kill").addEventListener("click", function() {
+                socket.emit("kill_set", false);
+            });
+
+            document.getElementById("unkill").addEventListener("click", function() {
+                socket.emit("kill_set", true);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (keystate[event.key] == true) return;
+                keystate[event.key] = true;
+
+                if (event.key == "x") {
+                    socket.emit("kill_set", false)
+                }
+                if (event.key == "z") {
+                    socket.emit("kill_set", true)
+                }
+                socket.emit("manual_control", {
+                    "pforward": keystate["w"],
+                    "pback": keystate["s"],
+                    "rright": keystate["d"],
+                    "rleft": keystate["a"],
+                    "mforward": keystate["ArrowUp"],
+                    "mback": keystate["ArrowDown"],
+                    "mright": keystate["ArrowRight"],
+                    "mleft": keystate["ArrowLeft"],
+                });
+                console.log("manual control command sent!");
+                
+            })
+
+            document.addEventListener('keyup', (event) => {
+                keystate[event.key] = false;
+                socket.emit("manual_control", {
+                    "pforward": keystate["w"],
+                    "pback": keystate["s"],
+                    "rright": keystate["d"],
+                    "rleft": keystate["a"],
+                    "mforward": keystate["ArrowUp"],
+                    "mback": keystate["ArrowDown"],
+                    "mright": keystate["ArrowRight"],
+                    "mleft": keystate["ArrowLeft"],
+                });
+                console.log("manual control command sent!");
+            })
+
+        })
+    </script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+
+<body> 
+    <div id="camera-feeds">
+        <img id="front-cam">
+        <img id="down-cam">
+        <img id="debug-img">
+    </div>
+    <div id="state-data">
+        <ul>
+            <li id="x"></li>
+            <li id="y"></li>
+            <li id="depth"></li>
+            <li id="yaw"></li>
+            <li id="pitch"></li>
+            <li id="roll"></li>
+        </ul>
+        <button id="state-100">Set state to 100</button>
+        <button id="reset-state">Reset state</button>
+    </div>
+    <div id="kill-data">
+        <span id="kill-state"></span>
+        <button id="kill">Kill</button>
+        <button id="unkill">Unkill</button>
+    </div>
+    <div id="log-data"></div>
+    
+</body>
+
+
+</html>

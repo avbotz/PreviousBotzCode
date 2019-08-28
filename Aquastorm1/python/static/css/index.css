@@ -1,0 +1,44 @@
+body {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+div {
+    border: 1px solid;
+    padding: 20px;
+}
+
+#camera-feeds {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-self: left;
+    justify-content: center;
+    
+}
+
+#log-data {
+    padding:5px;
+    width:auto;
+    height:400px;
+    overflow: auto;
+    white-space: pre;
+}
+
+#state-data {
+    height:auto;
+}
+
+#down-cam, #front-cam, #debug-img {
+    width: 400px;
+    height: auto;
+    object-fit: contain;
+    padding: 20px;
+}
+
+li:not(:last-child) {
+    margin-bottom: 2px;
+}
+
