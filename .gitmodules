@@ -4,3 +4,6 @@
 [submodule "otolith"]
 	path = otolith
 	url = https://github.com/avbotz/otolith.git
+[submodule "marlin"]
+	path = marlin
+	url = https://github.com/avbotz/marlin.git
