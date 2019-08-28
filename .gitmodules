@@ -1,3 +1,6 @@
 [submodule "Aquastorm"]
 	path = Aquastorm
 	url = https://github.com/avbotz/Aquastorm.git
+[submodule "otolith"]
+	path = otolith
+	url = https://github.com/avbotz/otolith.git
